@@ -99,5 +99,5 @@ You should see: Hello World
 ---
 
 ## License
-This project is licensed under the [MIT License](LICENSE).  
+This project is licensed under the [MIT License](https://github.com/XimenaCor/IWillDoIt/blob/main/LICENCE).  
 © 2025 Ximena Cordero
