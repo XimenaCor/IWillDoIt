@@ -4,15 +4,15 @@ import type { CreateTaskDto } from './dto/create-task.dto';
 
 @Controller('/task')
 export class TaskController {
-    constructor(private taskService: TaskService) { }
+  constructor(private taskService: TaskService) {}
 
-    @Get()
-    getAllTasks() {
-        return this.taskService.getAllTasks();
-    }
+  @Get()
+  getAllTasks() {
+    return this.taskService.getAllTasks();
+  }
 
-    @Post()
-    createTask(@Body() task: CreateTaskDto) {
-        return this.taskService.createTask(task);
-    }
+  @Post()
+  createTask(@Body() task: CreateTaskDto) {
+    return this.taskService.createTask(task);
+  }
 }

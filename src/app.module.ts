@@ -3,6 +3,6 @@ import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [TaskModule, UserModule]
+  imports: [TaskModule, UserModule],
 })
-export class AppModule { }
+export class AppModule {}
