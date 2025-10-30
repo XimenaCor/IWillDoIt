@@ -83,8 +83,8 @@ Follow these steps to run IllDo locally::
 
 ```bash
 # 1. Clone the repository
-$ git clone https://github.com/YourGitHubUsername/illdo.git
-$ cd illdo
+$ git clone https://github.com/XimenaCor/IWillDoIt.git
+$ cd IWillDoIt
 
 # 2. Install dependencies
 $ npm install
