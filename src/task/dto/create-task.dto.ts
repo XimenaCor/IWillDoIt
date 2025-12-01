@@ -1,8 +1,10 @@
-export interface CreateTaskDto {
-  _id: number;
-  title: string;
-  descripttion: string;
-  payable: boolean;
-  price: number;
-  date: Date;
+export class CreateTaskDto {
+    title: string;
+    description: string;
+    price: number;
+    isPaid: boolean;
+    createdByUserId: number;
+    expectedFinishDate?: string;
+    locationId?: number | null;
 }
+
