@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
@@ -51,7 +55,9 @@ export class TaskService {
       task.status === TaskStatus.CANCELLED ||
       task.status === TaskStatus.UNCONCLUDED
     ) {
-      throw new BadRequestException('Completed or cancelled tasks cannot be modified');
+      throw new BadRequestException(
+        'Completed or cancelled tasks cannot be modified',
+      );
     }
 
     if (updateTaskDto.title !== undefined) {
@@ -100,7 +106,9 @@ export class TaskService {
     const task = this.findOne(taskId);
 
     if (task.status !== TaskStatus.PENDING_OFFER) {
-      throw new BadRequestException('Task must be in PENDING_OFFER to be assigned');
+      throw new BadRequestException(
+        'Task must be in PENDING_OFFER to be assigned',
+      );
     }
 
     task.status = TaskStatus.ASSIGNED;
@@ -112,7 +120,9 @@ export class TaskService {
     const task = this.findOne(taskId);
 
     if (task.status !== TaskStatus.ASSIGNED) {
-      throw new BadRequestException('Only ASSIGNED tasks can be marked IN_PROGRESS');
+      throw new BadRequestException(
+        'Only ASSIGNED tasks can be marked IN_PROGRESS',
+      );
     }
 
     task.status = TaskStatus.IN_PROGRESS;
@@ -122,8 +132,13 @@ export class TaskService {
   markCompleted(taskId: number): Task {
     const task = this.findOne(taskId);
 
-    if (task.status !== TaskStatus.IN_PROGRESS && task.status !== TaskStatus.ASSIGNED) {
-      throw new BadRequestException('Only IN_PROGRESS or ASSIGNED tasks can be completed');
+    if (
+      task.status !== TaskStatus.IN_PROGRESS &&
+      task.status !== TaskStatus.ASSIGNED
+    ) {
+      throw new BadRequestException(
+        'Only IN_PROGRESS or ASSIGNED tasks can be completed',
+      );
     }
 
     task.status = TaskStatus.COMPLETED;
@@ -133,8 +148,13 @@ export class TaskService {
   markUnconcluded(taskId: number): Task {
     const task = this.findOne(taskId);
 
-    if (task.status !== TaskStatus.ASSIGNED && task.status !== TaskStatus.IN_PROGRESS) {
-      throw new BadRequestException('Only ASSIGNED or IN_PROGRESS tasks can be marked UNCONCLUDED');
+    if (
+      task.status !== TaskStatus.ASSIGNED &&
+      task.status !== TaskStatus.IN_PROGRESS
+    ) {
+      throw new BadRequestException(
+        'Only ASSIGNED or IN_PROGRESS tasks can be marked UNCONCLUDED',
+      );
     }
 
     task.status = TaskStatus.UNCONCLUDED;

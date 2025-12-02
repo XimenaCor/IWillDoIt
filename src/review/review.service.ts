@@ -5,7 +5,13 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 @Injectable()
 export class ReviewService {
   create(createReviewDto: CreateReviewDto) {
+    void createReviewDto;
     return 'This action adds a new review';
+  }
+
+  update(id: number, updateReviewDto: UpdateReviewDto) {
+    void updateReviewDto;
+    return `This action updates a #${id} review`;
   }
 
   findAll() {
@@ -14,10 +20,6 @@ export class ReviewService {
 
   findOne(id: number) {
     return `This action returns a #${id} review`;
-  }
-
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
   }
 
   remove(id: number) {

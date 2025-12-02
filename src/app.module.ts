@@ -8,4 +8,4 @@ import { UserModule } from './user/user.module';
 @Module({
   imports: [TaskModule, UserModule, OfferModule, LocationModule, ReviewModule],
 })
-export class AppModule { }
+export class AppModule {}

@@ -5,7 +5,13 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 @Injectable()
 export class LocationService {
   create(createLocationDto: CreateLocationDto) {
+    void createLocationDto;
     return 'This action adds a new location';
+  }
+
+  update(id: number, updateLocationDto: UpdateLocationDto) {
+    void updateLocationDto;
+    return `This action updates a #${id} location`;
   }
 
   findAll() {
@@ -14,10 +20,6 @@ export class LocationService {
 
   findOne(id: number) {
     return `This action returns a #${id} location`;
-  }
-
-  update(id: number, updateLocationDto: UpdateLocationDto) {
-    return `This action updates a #${id} location`;
   }
 
   remove(id: number) {

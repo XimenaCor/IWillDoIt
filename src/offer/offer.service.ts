@@ -8,13 +8,14 @@ import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
 import { OfferStatus } from './offer-status.enum';
 import { TaskService } from '../task/task.service';
+import { TaskStatus } from '../task/task-status.enum';
 
 @Injectable()
 export class OfferService {
   private offers: Offer[] = [];
   private idCounter = 1;
 
-  constructor(private readonly taskService: TaskService) { }
+  constructor(private readonly taskService: TaskService) {}
 
   create(createOfferDto: CreateOfferDto): Offer {
     // validate that the task exists and is open for offers
@@ -22,9 +23,9 @@ export class OfferService {
 
     // we don't allow offers on completed or cancelled tasks
     if (
-      task.status === 'COMPLETED' ||
-      task.status === 'CANCELLED' ||
-      task.status === 'UNCONCLUDED'
+      task.status === TaskStatus.COMPLETED ||
+      task.status === TaskStatus.CANCELLED ||
+      task.status === TaskStatus.UNCONCLUDED
     ) {
       throw new BadRequestException(
         'Cannot create offers for completed or cancelled tasks',

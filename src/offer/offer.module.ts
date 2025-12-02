@@ -8,4 +8,4 @@ import { TaskModule } from 'src/task/task.module';
   providers: [OfferService],
   imports: [TaskModule],
 })
-export class OfferModule { }
+export class OfferModule {}
