@@ -1,0 +1,25 @@
+name: Compose Smoke Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compose up + smoke test
+        run: |
+          chmod +x scripts/compose-smoke-test.sh
+          ./scripts/compose-smoke-test.sh
+
+      - name: Compose down (always)
+        if: always()
+        run: docker compose down -v

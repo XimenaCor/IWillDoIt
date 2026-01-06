@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: iwilldoit-db
+    environment:
+      POSTGRES_DB: iwilldoit
+      POSTGRES_USER: iwilldoit
+      POSTGRES_PASSWORD: iwilldoit
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U iwilldoit -d iwilldoit" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  log-service:
+    build:
+      context: ./services/log-service
+      dockerfile: Dockerfile
+    container_name: iwilldoit-log-service
+    environment:
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iwilldoit-api
+    environment:
+      PORT: 3000
+      # En el hito 4 usaremos esta variable cuando conectemos Prisma/Postgres
+      DATABASE_URL: postgres://iwilldoit:iwilldoit@db:5432/iwilldoit
+      LOG_SERVICE_URL: http://log-service:4000
+    depends_on:
+      db:
+        condition: service_healthy
+      log-service:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:

@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+.git
+.gitignore
+Dockerfile
+compose.yaml
+npm-debug.log
+.DS_Store
