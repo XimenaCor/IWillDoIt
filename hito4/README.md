@@ -1,172 +1,175 @@
+# 📦 Project Milestone 4 – Service Composition with Docker Compose
 
-# Hito 4 – Service Composition with Docker Compose
-
-## Project
-**IWillDoIt**
-
-This milestone focuses on composing multiple services using Docker Compose to create a reproducible, testable cluster that can be validated locally and in CI, and that serves as a stable foundation for future deployment (Hito 5).
-
----
-
-## 1. Objective of Hito 4
-
-The objective of Hito 4 is to design and implement a reproducible service composition using Docker Compose that includes:
-
-- Multiple containers working together as a cluster
-- At least one container dedicated exclusively to data storage
-- Configuration-as-code so the system can be started in any environment
-- Automated validation via CI using a smoke test
-- Docker images published to a public container registry (GHCR)
-
-This milestone focuses on **infrastructure and composition**, not on final business logic or full persistence.
+## 📍 Status
+**Milestone 4 – Service Composition (✅ Current)**  
+**Milestone 3 – Microservices Design (Completed)**  
+**Milestone 2 – Continuous Integration (Completed)**  
+**Milestone 1 – Repository Setup & Project Definition (Completed)**
 
 ---
 
-## 2. Cluster Architecture
+## 🎯 Objective
 
-The system is composed of three main services orchestrated via `compose.yaml`:
+The goal of **Milestone 4** is to design and implement a **reproducible multi-container environment** using **Docker and Docker Compose**, enabling the application to run consistently across development, testing, and future deployment environments.
 
-### 2.1 API Service (NestJS)
-- Implements the application logic developed in previous milestones
-- Exposes REST endpoints
-- Sends structured logs to the log-service
-- Runs on port **3000**
+This milestone focuses on **infrastructure and service composition**, ensuring that:
 
-### 2.2 Log Service
-- Independent Node.js microservice
-- Receives log events from the API
-- Provides a `/health` endpoint for validation
-- Runs on port **4000**
-
-### 2.3 Database Service
-- PostgreSQL container
-- Dedicated exclusively to data storage
-- Uses a Docker volume for persistence
-- Included to satisfy the requirement of a data container and to prepare the system for future persistence (Hito 5)
+- The backend API runs in an isolated container.
+- Auxiliary services (logging, database) are composed as independent containers.
+- The entire cluster can be started, tested, and destroyed in a fully automated way.
 
 ---
 
-## 3. Docker Compose Configuration
+## 🧩 Cluster Architecture Overview
 
-The `compose.yaml` file located at the root of the repository defines:
+The application is composed of **three main services**, orchestrated via Docker Compose:
 
-- All services in the cluster
-- Internal service networking
-- External port mappings for testing
-- Volumes for data persistence
-- Health checks to ensure correct startup order
+| Service | Description | Port |
+|-------|-------------|------|
+| **API** | NestJS backend application | `3000` |
+| **Log Service** | Lightweight Node.js service for centralized logging | `4000` |
+| **Database** | PostgreSQL container with persistent volume | `5432` |
+
+The architecture cleanly separates:
+
+- **Infrastructure concerns** (containers, networks, volumes)
+- **Application concerns** (API logic)
+- **Observability concerns** (logging service)
+
+---
+
+## 🧱 Docker & Compose Configuration
+
+### Dockerfiles
+
+The project includes **two Dockerfiles**, each explicitly documented and versioned:
+
+- **API Dockerfile** (root-level `Dockerfile`)
+  - Multi-stage build using `node:22-alpine`
+  - Builds NestJS application (`npm run build`)
+  - Runs optimized production image with compiled `dist/`
+
+- **Log Service Dockerfile** (`services/log-service/Dockerfile`)
+  - Lightweight Node.js container
+  - Exposes `/health` endpoint
+  - Accepts log events via HTTP
+
+### Docker Compose
+
+The `compose.yaml` file defines:
+
+- Service dependencies
+- Port mappings (internal & external)
+- Health checks for all services
+- Named volumes for database persistence
+- Configuration-as-code for full reproducibility
 
 Key characteristics:
-- Services can communicate using service names (e.g. `log-service`, `db`)
-- Ports are exposed only where needed for development and testing
+
 - The cluster can be started with a single command:
-  
+  ```bash
   docker compose up -d --build
+  ```
+- The environment behaves identically on any machine with Docker installed.
 
 ---
 
-## 4. Dockerfiles
+## 💾 Persistence & Data Containers
+A PostgreSQL container is included as a dedicated data service:
 
-### 4.1 API Dockerfile
-- Located at the root of the repository
-- Uses a multi-stage build
-- First stage builds the NestJS application
-- Second stage runs the compiled application with only production dependencies
-- Ensures smaller and reproducible images
+- Uses a named Docker volume for persistence
+- Can be replaced or extended in future milestones
 
-### 4.2 Log Service Dockerfile
-- Located at `services/log-service/Dockerfile`
-- Uses the official Node.js Alpine image
-- Installs only required dependencies
-- Runs a lightweight HTTP server for log ingestion
-
-Both Dockerfiles are version-controlled and part of the repository, fulfilling the infrastructure-as-code requirement.
+This satisfies the requirement of having a container exclusively dedicated to storing data, while keeping the API decoupled from the database implementation at this stage.
 
 ---
 
-## 5. Environment Configuration
+## 📡 Observability – Log Service
+A dedicated log-service microservice was implemented to demonstrate service-to-service communication and observability.
 
-Environment variables are managed via Docker Compose and documented using `.env.example`.
+Features:
 
-Examples:
-- `PORT`
-- `LOG_SERVICE_URL`
-- `POSTGRES_*` variables
+- Independent container
+- Health endpoint: GET /health
+- Receives logs via HTTP from the API
+- Demonstrates decoupled logging architecture
 
-This ensures that the system can be configured consistently across environments without modifying code.
-
----
-
-## 6. Smoke Test
-
-### 6.1 Local Smoke Test Script
-
-A script located at:
-
-`scripts/compose-smoke-test.sh`
-
-Performs the following steps:
-1. Builds and starts the Docker Compose cluster
-2. Waits for services to become healthy
-3. Calls the log-service health endpoint
-4. Sends a demo log request through the API
-5. Shuts down the cluster and removes volumes
-
-This validates that:
-- All containers start correctly
-- Services can communicate
-- The system behaves as expected end-to-end
-
-### 6.2 CI Smoke Test (GitHub Actions)
-
-The smoke test is executed automatically in CI using the workflow:
-
-`.github/workflows/compose-smoke-test.yml`
-
-It runs:
-- On push
-- On pull requests
-
-This guarantees that the composed system is always validated before integration.
+The API sends log events to the log service without being tightly coupled to its internal implementation.
 
 ---
 
-## 7. Continuous Integration
+## 🧪 Smoke Testing (Local & CI)
 
-The repository includes multiple GitHub Actions workflows:
+A cluster smoke test validates that the entire environment works as expected.
 
-### 7.1 NestJS CI Pipeline
-- Linting
-- Build
-- Unit tests
+Local Smoke Test Script
 
-### 7.2 Compose Smoke Test
-- Builds the Docker images
-- Starts the full cluster
-- Runs the smoke test
-- Tears down the environment
+`scripts/compose-smoke-test.sh performs:`
 
-### 7.3 Docker Image Publication (GHCR)
-- Builds Docker images for:
-  - API
-  - Log Service
-- Publishes them to GitHub Container Registry (GHCR)
-- Uses commit SHA and `latest` tags
+1. Build and start the cluster
+2. Wait for service health checks
+3. Validate log-service availability
+4. Send a demo log from API → log-service
+5. Tear down the environment
 
-All workflows run successfully on the `main` branch.
+This ensures the cluster is not only “running”, but **functionally correct**.
+
+### Smoke Test in GitHub Actions
+
+A dedicated workflow (`compose-smoke-test.yml`) runs the same test automatically on:
+
+- push
+- pull_request
+
+This guarantees that:
+
+- Dockerfiles remain valid
+- Services start correctly
+- Inter-service communication works
+- The cluster is reproducible in CI
+---
+
+## 🚀 Docker Image Publication (GHCR)
+
+Docker images are automatically built and published to **GitHub Container Registry (GHCR)** via GitHub Actions.
+
+Published images:
+
+- `ghcr.io/ximenacor/iwilldoit-api:latest`
+- `ghcr.io/ximenacor/iwilldoit-log-service:latest`
+
+Each push to `main`:
+
+- Builds images
+- Tags them with latest and commit SHA
+- Publishes them automatically
+
+This fulfills the requirement of **automated container publication**.
 
 ---
 
-## 8. Docker Images
+## 🔁 CI/CD Integration Summary
 
-The following images are published to GHCR:
+The repository now includes three CI workflows:
 
-- `ghcr.io/<owner>/iwilldoit-api`
-- `ghcr.io/<owner>/iwilldoit-log-service`
+| Workflow | Purpose |
+|-------|-------------|
+| **NestJS CI Pipeline** | Lint, test, build |
+| **Compose Smoke Test** | Validate cluster |
+| **Docker Images (GHCR)** | Build & publish containers |
 
-Images are:
-- Built automatically via GitHub Actions
-- Versioned using commit SHAs
-- Publicly accessible for deployment
+All workflows run successfully on `main`.
 
+---
+
+## 🔗 References
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Dockerfile Reference](https://docs.docker.com/engine/reference/builder/)
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitHub Container Registry (GHCR)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/)
+- [12-Factor App – Logs](https://12factor.net/logs)
 
