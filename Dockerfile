@@ -16,7 +16,7 @@ RUN npm run build
 
 
 # ---------- Production stage ----------
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
