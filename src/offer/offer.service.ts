@@ -8,18 +8,18 @@ import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
 import { OfferStatus } from './offer-status.enum';
 import { TaskService } from '../task/task.service';
-import { TaskStatus } from '../task/task-status.enum';
+import { TaskStatus } from '@prisma/client';
 
 @Injectable()
 export class OfferService {
   private offers: Offer[] = [];
   private idCounter = 1;
 
-  constructor(private readonly taskService: TaskService) {}
+  constructor(private readonly taskService: TaskService) { }
 
-  create(createOfferDto: CreateOfferDto): Offer {
+  async create(createOfferDto: CreateOfferDto): Promise<Offer> {
     // validate that the task exists and is open for offers
-    const task = this.taskService.findOne(createOfferDto.taskId);
+    const task = await this.taskService.findOne(createOfferDto.taskId);
 
     // we don't allow offers on completed or cancelled tasks
     if (

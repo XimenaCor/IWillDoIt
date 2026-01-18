@@ -7,6 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+# Copy Prisma schema and generate client
+COPY prisma ./prisma
+RUN npx prisma generate  # ← NUEVA LÍNEA
+
 # Copy sources and build
 COPY . .
 RUN npm run build
@@ -24,6 +28,8 @@ RUN npm ci --omit=dev
 
 # Copy compiled output
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma 
 
 # Nest default port (you confirmed 3000)
 EXPOSE 3000

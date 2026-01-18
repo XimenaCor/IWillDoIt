@@ -1,9 +1,11 @@
 export class CreateTaskDto {
   title: string;
   description: string;
-  price: number;
-  isPaid: boolean;
+  isPaid?: boolean;
+  price?: number;
+  expectedFinishDate?: Date;
+
   createdByUserId: number;
-  expectedFinishDate?: string;
-  locationId?: number | null;
+
+  locationId?: number; // ❌ NO null
 }

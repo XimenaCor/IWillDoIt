@@ -1,4 +1,4 @@
-import { TaskStatus } from '../task-status.enum';
+import { TaskStatus } from '@prisma/client';
 
 export class Task {
   id: number;

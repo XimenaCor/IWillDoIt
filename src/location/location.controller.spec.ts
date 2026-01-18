@@ -5,10 +5,18 @@ import { LocationService } from './location.service';
 describe('LocationController', () => {
   let controller: LocationController;
 
+  const locationServiceMock = {
+    create: jest.fn(),
+    findAllByUser: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LocationController],
-      providers: [LocationService],
+      providers: [{
+        provide: LocationService,
+        useValue: locationServiceMock,
+      }],
     }).compile();
 
     controller = module.get<LocationController>(LocationController);

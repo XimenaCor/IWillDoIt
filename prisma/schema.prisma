@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------
+// Enums
+// -------------------------
+enum TaskStatus {
+  OPEN
+  PENDING_OFFER
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+  UNCONCLUDED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ReviewDirection {
+  REQUESTER_TO_HELPER
+  HELPER_TO_REQUESTER
+}
+
+// -------------------------
+// Models
+// -------------------------
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String?  @unique
+  name      String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tasksCreated  Task[]   @relation("TaskCreatedBy")
+  tasksAssigned Task[]   @relation("TaskAssignedTo")
+  offers        Offer[]
+  reviewsGiven  Review[] @relation("ReviewGivenBy")
+  reviewsReceived Review[] @relation("ReviewReceivedBy")
+
+  locations Location[]
+}
+
+model Location {
+  id        Int      @id @default(autoincrement())
+  lat       Float
+  lng       Float
+  address   String?
+
+  ownerId   Int
+  owner     User     @relation(fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks     Task[]
+
+  @@index([ownerId])
+}
+
+model Task {
+  id                 Int        @id @default(autoincrement())
+  title              String
+  description        String
+  isPaid             Boolean    @default(false)
+  price              Float?
+  status             TaskStatus @default(OPEN)
+
+  createdAt          DateTime   @default(now())
+  expectedFinishDate DateTime?
+
+  createdByUserId    Int
+  createdByUser      User       @relation("TaskCreatedBy", fields: [createdByUserId], references: [id])
+
+  assignedUserId     Int?
+  assignedUser       User?      @relation("TaskAssignedTo", fields: [assignedUserId], references: [id])
+
+  locationId         Int
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  offers             Offer[]
+  reviews            Review[]
+
+  @@index([status])
+  @@index([createdByUserId])
+  @@index([assignedUserId])
+  @@index([locationId])
+}
+
+
+model Offer {
+  id        Int        @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  message   String?
+  status    OfferStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  task      Task       @relation(fields: [taskId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+
+  // Solo 1 oferta activa por usuario por tarea
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+model Review {
+  id           Int             @id @default(autoincrement())
+  taskId       Int
+  rating       Int             // 1..5 (lo validamos en lógica)
+  comment      String?
+  direction    ReviewDirection
+
+  createdAt    DateTime        @default(now())
+
+  // quien escribe la review
+  givenByUserId Int
+  givenByUser   User            @relation("ReviewGivenBy", fields: [givenByUserId], references: [id])
+
+  // quien recibe la review
+  receivedByUserId Int
+  receivedByUser   User         @relation("ReviewReceivedBy", fields: [receivedByUserId], references: [id])
+
+  task         Task             @relation(fields: [taskId], references: [id])
+
+  // 2 reviews por tarea como máximo: una por dirección
+  @@unique([taskId, direction])
+  @@index([taskId])
+  @@index([givenByUserId])
+  @@index([receivedByUserId])
+}

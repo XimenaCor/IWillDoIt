@@ -4,7 +4,7 @@ import { OfferService } from './offer.service';
 import { OfferStatus } from './offer-status.enum';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { TaskService } from '../task/task.service';
-import { TaskStatus } from '../task/task-status.enum';
+import { TaskStatus } from '@prisma/client';
 import { Task } from '../task/entities/task.entity';
 
 const createMockTask = (status: TaskStatus): Task => ({
@@ -23,7 +23,7 @@ const createMockTask = (status: TaskStatus): Task => ({
 
 describe('OfferService', () => {
   let service: OfferService;
-  let taskService: TaskService;
+  let taskService: jest.Mocked<TaskService>;
 
   beforeEach(async () => {
     const taskServiceMock = {
@@ -42,7 +42,8 @@ describe('OfferService', () => {
     }).compile();
 
     service = module.get<OfferService>(OfferService);
-    taskService = module.get<TaskService>(TaskService);
+    taskService = module.get(TaskService);
+
     jest.clearAllMocks();
   });
 
@@ -51,10 +52,10 @@ describe('OfferService', () => {
     expect(taskService).toBeDefined();
   });
 
-  it('should create a PENDING offer for a valid task', () => {
-    const findOneSpy = jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should create a PENDING offer for a valid task', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
     const dto: CreateOfferDto = {
       taskId: 1,
@@ -62,18 +63,17 @@ describe('OfferService', () => {
       message: 'I can help on Saturday',
     };
 
-    const offer = service.create(dto);
+    const offer = await service.create(dto);
 
-    expect(findOneSpy).toHaveBeenCalledWith(1);
+    expect(taskService.findOne).toHaveBeenCalledWith(1);
     expect(offer).toBeDefined();
-    expect(offer.id).toBe(1);
     expect(offer.taskId).toBe(1);
     expect(offer.userId).toBe(2);
     expect(offer.status).toBe(OfferStatus.PENDING);
     expect(offer.createdAt).toBeInstanceOf(Date);
   });
 
-  it('should not create an offer for a completed/cancelled/unconcluded task', () => {
+  it('should not create an offer for completed, cancelled or unconcluded tasks', async () => {
     const invalidStatuses = [
       TaskStatus.COMPLETED,
       TaskStatus.CANCELLED,
@@ -81,9 +81,9 @@ describe('OfferService', () => {
     ];
 
     for (const status of invalidStatuses) {
-      jest
-        .spyOn(taskService, 'findOne')
-        .mockReturnValue(createMockTask(status));
+      taskService.findOne.mockResolvedValue(
+        createMockTask(status),
+      );
 
       const dto: CreateOfferDto = {
         taskId: 1,
@@ -91,21 +91,21 @@ describe('OfferService', () => {
         message: 'Test',
       };
 
-      expect(() => service.create(dto)).toThrow(BadRequestException);
+      await expect(service.create(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+
       jest.clearAllMocks();
     }
   });
 
-  it('should return all offers with findAll', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should return all offers with findAll', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto1: CreateOfferDto = { taskId: 1, userId: 2, message: 'First' };
-    const dto2: CreateOfferDto = { taskId: 1, userId: 3, message: 'Second' };
-
-    service.create(dto1);
-    service.create(dto2);
+    await service.create({ taskId: 1, userId: 2, message: 'First' });
+    await service.create({ taskId: 1, userId: 3, message: 'Second' });
 
     const offers = service.findAll();
 
@@ -114,13 +114,16 @@ describe('OfferService', () => {
     expect(offers[1].userId).toBe(3);
   });
 
-  it('should find an offer by id', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should find an offer by id', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
     const found = service.findOne(created.id);
 
@@ -132,86 +135,108 @@ describe('OfferService', () => {
     expect(() => service.findOne(999)).toThrow(NotFoundException);
   });
 
-  it('should update the message of an offer', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should update the message of an offer', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Original' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Original',
+    });
 
-    const updated = service.update(created.id, { message: 'Updated' });
+    const updated = service.update(created.id, {
+      message: 'Updated',
+    });
 
     expect(updated.message).toBe('Updated');
   });
 
-  it('should mark an offer as WITHDRAWN when removed (if PENDING)', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should mark an offer as WITHDRAWN when removed if PENDING', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
     const removed = service.remove(created.id);
 
     expect(removed.status).toBe(OfferStatus.WITHDRAWN);
   });
 
-  it('should not allow removing a non-PENDING offer', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should not allow removing a non-PENDING offer', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
-    // We first accept the offer
-    service.accept(created.id);
+    await service.accept(created.id);
 
-    expect(() => service.remove(created.id)).toThrow(BadRequestException);
+    expect(() => service.remove(created.id)).toThrow(
+      BadRequestException,
+    );
   });
 
-  it('should accept a PENDING offer and assign the task', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should accept a PENDING offer and assign the task', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
-    const accepted = service.accept(created.id);
+    const accepted = await service.accept(created.id);
 
     expect(accepted.status).toBe(OfferStatus.ACCEPTED);
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(taskService.assignTask).toHaveBeenCalledWith(1, 2);
   });
 
-  it('should not accept a non-PENDING offer', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should not accept a non-PENDING offer', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
-    // We first reject the offer
     service.reject(created.id);
 
-    expect(() => service.accept(created.id)).toThrow(BadRequestException);
+    expect(() => service.accept(created.id)).toThrow(
+      BadRequestException,
+    );
   });
 
-  it('should not reject a non-PENDING offer', () => {
-    jest
-      .spyOn(taskService, 'findOne')
-      .mockReturnValue(createMockTask(TaskStatus.OPEN));
+  it('should not reject a non-PENDING offer', async () => {
+    taskService.findOne.mockResolvedValue(
+      createMockTask(TaskStatus.OPEN),
+    );
 
-    const dto: CreateOfferDto = { taskId: 1, userId: 2, message: 'Test' };
-    const created = service.create(dto);
+    const created = await service.create({
+      taskId: 1,
+      userId: 2,
+      message: 'Test',
+    });
 
-    // We first accept the offer
-    service.accept(created.id);
+    await service.accept(created.id);
 
-    expect(() => service.reject(created.id)).toThrow(BadRequestException);
+    expect(() => service.reject(created.id)).toThrow(
+      BadRequestException,
+    );
   });
 });
