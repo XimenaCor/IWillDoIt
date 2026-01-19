@@ -284,7 +284,7 @@ The application remained stable, with no unexpected crashes or data loss.
 
 The application is publicly available at:
 
-👉 https://iwilldoit.fly.dev
+👉 https://iwilldoit.fly.dev/tasks
 
 All API endpoints are accessible and operational.
 
