@@ -6,6 +6,10 @@ export class PrismaService
     extends PrismaClient
     implements OnModuleInit, OnModuleDestroy {
     async onModuleInit() {
+        if (!process.env.DATABASE_URL) {
+            console.warn('DATABASE_URL not set — Prisma disabled');
+            return;
+        }
         await this.$connect();
     }
 
